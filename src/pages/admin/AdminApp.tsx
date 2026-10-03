@@ -37,7 +37,7 @@ export default function AdminApp() {
           <div className="flex-1" />
           <button type="button" onClick={async () => { await signOut(); navigate('/'); }} className="flex min-h-tap items-center gap-2 rounded-full px-3 text-sm font-medium hover:bg-sand/60">
             <LogOut className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-            {t('profile.signOut')}
+            <span className="sr-only sm:not-sr-only">{t('profile.signOut')}</span>
           </button>
         </div>
         <nav className="no-scrollbar mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 pb-2" aria-label={t('admin.title')}>

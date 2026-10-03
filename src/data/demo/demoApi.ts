@@ -94,7 +94,20 @@ export class DemoApi implements Api {
     this.latency = opts.latencyMs ?? 120;
     this.t = opts.t ?? ((k) => k);
     this.session = opts.sessionStorage === undefined ? (typeof localStorage !== 'undefined' ? localStorage : null) : opts.sessionStorage;
+    this.seedMessageLog();
     this.runJobs();
+  }
+
+  /** Fresh demo: show the confirmations of the latest bookings in the « Messages envoyés » log. */
+  private seedMessageLog() {
+    if (this.s.notifications.length) return;
+    const latest = [...this.s.appointments]
+      .filter((a) => a.status !== 'cancelled' && a.status !== 'pending_payment')
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, 6)
+      .reverse();
+    for (const a of latest) this.notify(a, 'booking_confirmed');
+    this.db.save();
   }
 
   private get s() {
