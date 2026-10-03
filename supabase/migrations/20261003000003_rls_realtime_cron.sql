@@ -132,7 +132,7 @@ grant execute on function public.create_booking_hold(uuid, uuid[], uuid, timesta
 grant execute on function public.release_hold(uuid) to anon, authenticated;
 grant execute on function public.start_payment(uuid, public.payment_option, public.payment_method, text, text) to anon, authenticated;
 grant execute on function public.verify_payment(uuid) to anon, authenticated;
-grant execute on function public.search_businesses(text, uuid, text, double precision, double precision, boolean, int, numeric, boolean, boolean, public.audience, text, int, int) to anon, authenticated;
+grant execute on function public.search_businesses(text, text, uuid, text, double precision, double precision, boolean, int, numeric, boolean, boolean, public.audience, text, int, int) to anon, authenticated;
 grant execute on function public.get_booking(text) to anon, authenticated;
 -- Internal security-definer helpers are never callable from the API.
 revoke execute on function public.send_reminders() from public, anon, authenticated;

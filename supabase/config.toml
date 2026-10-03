@@ -1,0 +1,31 @@
+project_id = "kuzuri"
+
+[api]
+port = 54321
+schemas = ["public"]
+
+[db]
+port = 54322
+major_version = 15
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[realtime]
+enabled = true
+
+[auth]
+site_url = "http://localhost:5173"
+enable_signup = true
+
+[auth.sms]
+enable_signup = true
+enable_confirmations = true
+
+# Mocked OTP for local development: every demo number accepts 123456.
+[auth.sms.test_otp]
+242061234567 = "123456"
+
+[functions.payments]
+verify_jwt = false

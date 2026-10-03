@@ -24,6 +24,9 @@ export default defineConfig({
       workbox: {
         navigateFallback: '/index.html',
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+        // Never precache the Supabase SDK in demo mode, nor the English bundle / map library:
+        // they are fetched on demand and cached at runtime.
+        globIgnores: ['**/supabaseApi*.js', '**/en-*.js', '**/LeafletMap*.js', '**/LeafletMap*.css'],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => url.hostname.endsWith('tile.openstreetmap.org'),
@@ -43,14 +46,6 @@ export default defineConfig({
   build: {
     target: 'es2020',
     cssCodeSplit: true,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules/@supabase')) return 'supabase';
-          if (id.includes('node_modules/leaflet')) return 'leaflet';
-        },
-      },
-    },
   },
   test: { environment: 'node', include: ['src/**/*.test.ts'] },
 });

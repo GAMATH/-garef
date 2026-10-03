@@ -30,6 +30,7 @@ import type {
   Country,
   DayAvailability,
   NotificationEvent,
+  Payment,
   Profile,
   Review,
   SalonDetail,
@@ -100,10 +101,10 @@ export class DemoApi implements Api {
     return this.db.state;
   }
 
-  private async wait<T>(fn: () => T): Promise<T> {
+  private async wait<T>(fn: () => T | Promise<T>): Promise<T> {
     if (this.latency > 0) await new Promise((r) => setTimeout(r, this.latency));
     this.db.refresh();
-    return fn();
+    return await fn();
   }
 
   /** pg_cron equivalent: release expired holds + D-1 reminders. Called on every read. */
@@ -196,7 +197,7 @@ export class DemoApi implements Api {
     return same;
   }
 
-  private nextSlot(b: Business): string | null {
+  private nextSlot(b: Business): { start: string; serviceId: string } | null {
     const services = this.s.services
       .filter((s) => s.businessId === b.id && s.active && this.s.staffServices.some((x) => x.serviceId === s.id && this.s.staff.find((st) => st.id === x.staffId)?.active))
       .sort((a, c) => a.durationMin - c.durationMin || a.price - c.price);
@@ -205,18 +206,20 @@ export class DemoApi implements Api {
     const today = todayIn(tz, this.now());
     for (let i = 0; i < 7; i++) {
       const slots = this.slotsFor({ businessId: b.id, serviceIds: [services[0].id], staffId: null }, addDays(today, i));
-      if (slots.length) return slots[0].start;
+      if (slots.length) return { start: slots[0].start, serviceId: services[0].id };
     }
     return null;
   }
 
   private summary(b: Business, near?: { lat: number; lng: number } | null): SalonSummary {
     const services = this.s.services.filter((s) => s.businessId === b.id && s.active);
+    const next = this.nextSlot(b);
     return {
       business: clone(b),
       city: clone(this.city(b.cityId)),
       minPrice: services.length ? Math.min(...services.map((s) => s.price)) : 0,
-      nextSlot: this.nextSlot(b),
+      nextSlot: next?.start ?? null,
+      nextSlotServiceId: next?.serviceId ?? null,
       distanceKm: near ? Math.round(haversineKm(near, b) * 10) / 10 : null,
       acceptsMobileMoney: b.paymentMethods.includes('mobile_money'),
       categoryIds: [...new Set(services.map((s) => s.categoryId))],
@@ -326,6 +329,7 @@ export class DemoApi implements Api {
       const category = p.categorySlug ? this.s.categories.find((c) => c.slug === p.categorySlug) : null;
       let list = this.s.businesses.filter((b) => b.status === 'active');
       if (p.cityId) list = list.filter((b) => b.cityId === p.cityId);
+      if (p.countryCode) list = list.filter((b) => this.city(b.cityId).countryCode === p.countryCode);
       if (category) list = list.filter((b) => this.s.services.some((s) => s.businessId === b.id && s.active && s.categoryId === category.id));
       const score = new Map<string, number>();
       if (q) {
@@ -486,14 +490,14 @@ export class DemoApi implements Api {
       const providerId = input.method === 'card' ? 'card' : input.operator ?? this.country(b.cityId).operators[0];
       const provider = getProvider(providerId, () => this.now().getTime());
       const { providerRef } = await provider.initiate({ amount, currency: this.country(b.cityId).currency, reference: a.reference, phone: input.phone });
-      const payment = {
+      const payment: Payment & { providerRef: string } = {
         id: uid(),
         appointmentId: a.id,
         businessId: b.id,
         provider: providerId,
         method: input.method,
         amount,
-        status: 'pending' as const,
+        status: 'pending',
         phone: input.phone ?? null,
         providerRef,
         createdAt: this.now().toISOString(),

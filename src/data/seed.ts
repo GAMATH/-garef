@@ -22,11 +22,8 @@ import type {
 import { CATEGORIES, CITIES, STAFF_COLORS, countryByCode } from './reference';
 import { timeToMinutes, minutesToTime } from '@/lib/time';
 
-export const DEMO_ACCOUNTS = {
-  client: { id: 'a0000000-0000-4000-8000-000000000001', phone: '+242061234567', otp: '123456', firstName: 'Grâce', lastName: 'Mabiala', email: 'grace@kuzuri.demo' },
-  owner: { id: 'a0000000-0000-4000-8000-000000000002', email: 'gerant@kuzuri.demo', password: 'kuzuri2026', firstName: 'Nadège', lastName: 'Okemba', phone: '+242055550101' },
-  admin: { id: 'a0000000-0000-4000-8000-000000000003', email: 'admin@kuzuri.demo', password: 'kuzuri2026', firstName: 'Admin', lastName: 'Kuzuri', phone: '+242055550000' },
-} as const;
+import { DEMO_ACCOUNTS } from './demoAccounts';
+export { DEMO_ACCOUNTS };
 
 function mulberry32(seed: number) {
   let a = seed >>> 0;
@@ -273,7 +270,7 @@ export function generateSeed(): SeedData {
         lastName,
         phone: isDemoClient ? DEMO_ACCOUNTS.client.phone : country.dialCode + num,
         email: isDemoClient ? DEMO_ACCOUNTS.client.email : '',
-        createdDayOffset: -between(31, 300),
+        createdDayOffset: -between(1, 240),
       });
     }
   });
@@ -290,9 +287,12 @@ export function generateSeed(): SeedData {
   const usedRefs = new Set<string>();
   let guard = 0;
   while (data.appointments.length < SEED_CANDIDATES && guard++ < 20000) {
-    const bi = data.appointments.length < 20 ? data.appointments.length % 10 : between(0, 9);
+    // The demo manager's salon (index 0) is the busiest, with a dense fortnight around today.
+    // First 50 candidates: 5 completed, reviewed past visits per salon, so every salon has history.
+    const forced = data.appointments.length < 50;
+    const bi = forced ? data.appointments.length % 10 : rand() < 0.35 ? 0 : between(1, 9);
     const b = data.businesses[bi];
-    const dayOffset = between(-30, 13);
+    const dayOffset = forced ? between(-30, -1) : bi === 0 && rand() < 0.7 ? between(-7, 7) : between(-30, 13);
     const tplHours = HOURS[SALONS[bi].hours];
     const services = data.services.filter((s) => s.businessId === b.id);
     const nServices = rand() < 0.2 ? 2 : 1;
@@ -329,7 +329,8 @@ export function generateSeed(): SeedData {
     const past = dayOffset < 0;
     let status: AppointmentStatus;
     const r = rand();
-    if (past) status = r < 0.8 ? 'completed' : r < 0.87 ? 'no_show' : 'cancelled';
+    if (forced) status = 'completed';
+    else if (past) status = r < 0.8 ? 'completed' : r < 0.87 ? 'no_show' : 'cancelled';
     else status = r < 0.9 ? 'confirmed' : 'cancelled';
 
     const total = chosen.reduce((s, x) => s + x.price, 0);
@@ -381,7 +382,7 @@ export function generateSeed(): SeedData {
       });
     }
 
-    if (status === 'completed' && rand() < 0.55 && client.profileId !== DEMO_ACCOUNTS.client.id) {
+    if (status === 'completed' && (forced || rand() < 0.55) && client.profileId !== DEMO_ACCOUNTS.client.id) {
       const rating = rand() < 0.65 ? 5 : rand() < 0.8 ? 4 : 3;
       data.reviews.push({
         id: uuidFrom('7e000000', ++reviewN), appointmentId: id, businessId: b.id, profileId: null,

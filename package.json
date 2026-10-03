@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:sql": "bash supabase/tests/run.sh",
     "seed:sql": "vite-node scripts/build-seed-sql.ts",
-    "size": "node scripts/check-bundle-size.mjs"
+    "size": "node scripts/check-bundle-size.mjs",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@fontsource/fraunces": "^5.1.0",
@@ -32,6 +33,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@types/leaflet": "^1.9.15",
     "@types/node": "^22.10.1",
     "@types/react": "^18.3.12",

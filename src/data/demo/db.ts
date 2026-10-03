@@ -54,7 +54,7 @@ export interface DemoState {
 }
 
 const STORAGE_KEY = 'kuzuri-demo-db';
-const VERSION = 3;
+const VERSION = 4;
 
 export function uid(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();

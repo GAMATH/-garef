@@ -549,6 +549,7 @@ create trigger reviews_refresh_rating after insert or update or delete on public
 -- ---------------------------------------------------------------- search
 create or replace function public.search_businesses(
   p_q text default null,
+  p_country_code text default null,
   p_city_id uuid default null,
   p_category_slug text default null,
   p_lat double precision default null,
@@ -581,6 +582,7 @@ begin
     from businesses b join cities c on c.id = b.city_id
     where b.status = 'active'
       and (p_city_id is null or b.city_id = p_city_id)
+      and (p_country_code is null or c.country_code = p_country_code)
       and (p_category_slug is null or exists (
         select 1 from services s join categories k on k.id = s.category_id
         where s.business_id = b.id and s.active and k.slug = p_category_slug))
@@ -613,6 +615,9 @@ begin
       jsonb_build_object(
         'business', to_jsonb(f) - 'search' - 'city_name' - 'min_price' - 'distance_km' - 'rank' - 'next_slot',
         'min_price', f.min_price, 'distance_km', f.distance_km, 'next_slot', f.next_slot,
+        'next_service_id', (select s.id from services s where s.business_id = f.id and s.active
+           and exists (select 1 from staff_services ss join staff st on st.id = ss.staff_id where ss.service_id = s.id and st.active)
+           order by s.duration_min, s.price limit 1),
         'category_ids', (select coalesce(jsonb_agg(distinct s.category_id), '[]') from services s where s.business_id = f.id and s.active)
       ) as row_json
     from filtered2 f

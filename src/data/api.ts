@@ -59,6 +59,7 @@ export interface Reference {
 
 export interface SearchParams {
   q?: string;
+  countryCode?: string;
   cityId?: string;
   categorySlug?: string;
   near?: { lat: number; lng: number } | null;

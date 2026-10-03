@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DemoApi } from './api';
+import { DemoApi } from './demoApi';
 import { DemoDb } from './db';
 import { ApiError } from '../api';
 import { MOCK_CONFIRMATION_MS } from '@/lib/payments';

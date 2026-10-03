@@ -126,6 +126,7 @@ select pg_temp.assert(jsonb_array_length(search_businesses(p_limit => 4) -> 'ite
 select pg_temp.assert((search_businesses(p_category_slug => 'locks') ->> 'total')::int between 1 and 5, 'category filter');
 select pg_temp.assert((search_businesses(p_q => 'barb') ->> 'total')::int >= 2, 'prefix full-text search');
 select pg_temp.assert((search_businesses(p_city_id => '0c000000-0000-4000-8000-000000000006') ->> 'total')::int = 2, 'city filter: Abidjan');
+select pg_temp.assert((search_businesses(p_country_code => 'CM') ->> 'total')::int = 2, 'country filter: Cameroun');
 
 -- RLS ------------------------------------------------------------------------
 set role anon;

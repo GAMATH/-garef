@@ -251,6 +251,8 @@ export interface SalonSummary {
   city: City;
   minPrice: number;
   nextSlot: string | null;
+  /** Service the next slot was computed for (shortest one) — lets the card deep-link into booking. */
+  nextSlotServiceId: string | null;
   distanceKm: number | null;
   acceptsMobileMoney: boolean;
   categoryIds: string[];
